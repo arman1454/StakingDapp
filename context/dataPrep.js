@@ -31,3 +31,99 @@ function parseErrorMsg(e) {
 }
 
 export const SHORTEN_ADDRESS = (address) => `${address?.slice(0, 8)}...${address?.slice(address.length - 4)}`;
+
+export const copyAddress = (text) => {
+    navigator.clipboard.writeText(text);
+    notifySuccess("Copied Successfully");
+}
+
+
+export async function STAKING_CONTRACT_DATA(address) {
+    try {
+        const contractInstance = await stakingContract(); //returning the datas of the StakingDapp datas
+        // const stakingTokenObj = await tokenContract();
+
+        if (address) {
+            const contractOwner = await contractInstance.owner();
+            const contractAddress = await contractInstance.address;
+
+            //notification
+
+            const notification = await contractInstance.getNotifications();
+
+            const _notificationsArray = await Promise.all(
+                notification.map(async ({ poolID, amount, user, typeOf, timeStamp }) => {
+                    return {
+                        poolID: poolID.toNumber(),
+                        amount: toEth(amount),
+                        user: user,
+                        typeOf: typeOf,
+                        timeStamp: CONVERT_TIMESTAMP_TO_READABLE(timeStamp)
+                    }
+                })
+            )
+
+            let poolInfoArray = [];
+            const poolLength = await contractInstance.poolCount();
+
+            const length = poolLength.toNumber();
+
+            for (let i = 0; i < length; i++) {
+                const poolInfo = await contractInstance.poolInfo(i);
+                const userInfo = await contractInstance.userInfo(i, address);
+
+                const userReward = await contractInstance.pendingReward(i, address);
+                const tokenPoolInfoA = await ERC20Contract(poolInfo.depositToken, address);
+                const tokenPoolInfoB = await ERC20Contract(poolInfo.rewardToken, address);
+
+                console.log(poolInfo);
+
+                const pool = {
+                    depositTokenAddress: poolInfo.depositToken,
+                    rewardTokenAddress: poolInfo.rewardToken,
+                    depositToken: tokenPoolInfoA,
+                    rewardToken: tokenPoolInfoB,
+
+                    despositedAmount: toEth(poolInfo.depositedAmount.toString()),
+                    apy: poolInfo.apy.toString(),
+                    lockDays: poolInfo.lockDays.toString(),
+                    amount: toEth(userInfo.amount.toString()),
+                    userReward: toEth(userReward),
+                    lockUntil: CONVERT_TIMESTAMP_TO_READABLE(userInfo.lockUntil.toNumber()),
+                    lastRewardAt: toEth(userInfo.lastRewardAt.toString())
+
+                }
+
+                poolInfoArray.push(pool)
+            }
+
+
+            const totalDepositedAmount = poolInfoArray.reduce((total, pool) => {
+                return total + parseFloat(pool.despositedAmount)
+            }, 0)
+
+            const rewardToken = await ERC20Contract(REWARD_TOKEN, address);
+            const depositToken = await ERC20Contract(DEPOSIT_TOKEN, address);
+            console.log(depositToken);
+
+            const data = {
+                contractOwner: contractOwner,
+                contractAddress: contractAddress,
+                notifications: _notificationsArray.reverse(),
+                rewardToken: rewardToken,
+                depositToken: depositToken,
+                poolInfoArray: poolInfoArray,
+                totalDepositedAmount: totalDepositedAmount,
+                contractTokenBalance: rewardToken.contractTokenBalance - totalDepositedAmount,
+
+            };
+
+            return data;
+        }
+    } catch (error) {
+        console.log(error);
+        console.log(parseErrorMsg(error));
+        return parseErrorMsg(error)
+
+    }
+}
