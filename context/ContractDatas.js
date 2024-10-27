@@ -16,7 +16,12 @@ export function toEth(amount, decimals = 18) {
     return toEth.toString();
 }
 
-export const tokenContract = async () => {
+export function toWei(amount) {
+    const toWei = ethers.utils.parseUnits(amount.toSting());
+    return toWei.toString();
+}
+
+export const DepositTokenContract = async () => {
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     const { ethereum } = window;
     //checking whether the ethereum object exists in the browser
@@ -99,7 +104,7 @@ export const TOKEN_ICO_CONTRACT = async () => {
     }
 }
 
-export const TOKEN_ICO_ERC20 = async () => {
+export const DEPOSIT_TOKEN_USER_INFO = async () => {
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     const { ethereum } = window;
     try {
@@ -111,7 +116,7 @@ export const TOKEN_ICO_ERC20 = async () => {
             )
 
             const userAddress = await signer.getAddress();
-            const nativeBalance = await signer.getBalance();
+            const walletBalance = await signer.getBalance();
             const balance = await contractReader.balanceOf(userAddress);
 
             const token = {
@@ -121,7 +126,7 @@ export const TOKEN_ICO_ERC20 = async () => {
                 decimals: await contractReader.decimals(),
                 supply: toEth(await contractReader.totalSupply()),
                 balance: toEth(balance),
-                nativeBalance: toEth(nativeBalance.toString())
+                nativeBalance: toEth(walletBalance.toString())
             }
 
             return token;
@@ -149,7 +154,7 @@ export const LOAD_TOKEN_ICO = async () => {
             const soldTokens = await contract.soldTokens();
 
 
-            const ICO_TOKEN = await TOKEN_ICO_ERC20();
+            const ICO_TOKEN_USER_INFO = await DEPOSIT_TOKEN_USER_INFO();
 
             const token = {
                 tokenBalance: ethers.utils.formatEther(tokenDetails.balance.toString()),
@@ -160,7 +165,7 @@ export const LOAD_TOKEN_ICO = async () => {
                 tokenAddr: tokenDetails.tokenAddr,
                 owner: contractOwner.toLowerCase(),
                 soldTokens: soldTokens.toNumber(),
-                token: ICO_TOKEN
+                token: ICO_TOKEN_USER_INFO
             }
 
             return token;
