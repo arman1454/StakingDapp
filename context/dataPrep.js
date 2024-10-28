@@ -223,7 +223,7 @@ export const withDraw = async(poolID,amount)=>{
 export const claimReward = async(poolID)=>{
     try {
         notifySuccess("Calling contract...")
-        const contractInstance = await Contract();
+        const contractInstance = await stakingContract();
         const gasEstimation = await contractInstance.estimateGas.claimReward(
             Number(poolID)
         )
@@ -234,6 +234,77 @@ export const claimReward = async(poolID)=>{
 
         const receipt = await data.wait();
         notifySuccess("Reward Claim successfully completed")
+        return receipt;
+    } catch (error) {
+        console.log(error);
+        const errorMsg = parseErrorMsg(error);
+        notifyError(errorMsg)
+    }
+}
+
+export const createPool = async(pool)=>{
+    try {
+        const { _depositToken, _rewardToken, _apy, _lockDays } = pool;
+        if (!_depositToken || !_rewardToken || !_apy || !_lockDays) return notifyError("Provide all the details");
+        notifySuccess("Calling contract...")
+        const contractInstance = await stakingContract();
+        const gasEstimation = await contractInstance.estimateGas.addPool(
+            _depositToken, _rewardToken, Number(_apy), Number(_lockDays)
+        )
+
+        const addPoolTx = await contractInstance.addPool(_depositToken, _rewardToken, Number(_apy), Number(_lockDays), {
+            gasLimit: gasEstimation,
+        })
+
+        const receipt = await addPoolTx.wait();
+        notifySuccess("Pool Creation successfully")
+        return receipt;
+    } catch (error) {
+        console.log(error);
+        const errorMsg = parseErrorMsg(error);
+        notifyError(errorMsg)
+    }
+}
+
+export const modifyPool = async(poolID,amount)=>{
+    try {
+        notifySuccess("Calling contract...")
+        const contractInstance = await stakingContract();
+        const gasEstimation = await contractInstance.estimateGas.modifyPool(
+            Number(poolID), Number(amount)
+        )
+
+        const data = await contractInstance.modifyPool(Number(poolID), Number(amount), {
+            gasLimit: gasEstimation,
+        })
+
+        const receipt = await data.wait();
+        notifySuccess("Pool Modified successfully completed")
+        return receipt;
+    } catch (error) {
+        console.log(error);
+        const errorMsg = parseErrorMsg(error);
+        notifyError(errorMsg)
+    }
+}
+
+export const sweep = async(tokenData)=>{
+    try {
+        const { token, amount } = tokenData;
+        if (!token || !amount) return notifyError("Data is missing")
+
+        notifySuccess("Calling contract...");
+        const contractInstance = await stakingContract();
+        const transferAmount = ethers.utils.parseEther(amount);
+
+        const gasEstimation = await contractInstance.estimateGas.sweep(
+            token, transferAmount
+        )
+
+        const data = await contractInstance.sweep(token, transferAmount, { gasLimit: gasEstimation })
+
+        const receipt = await data.wait()
+        notifySuccess("transaction completed successfully")
         return receipt;
     } catch (error) {
         console.log(error);
