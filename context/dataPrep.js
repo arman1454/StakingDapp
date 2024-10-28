@@ -175,3 +175,24 @@ export const deposit = async (poolID,amount,address)=>{
         
     }
 }
+
+
+export const transferToken = async(amount,transferAddress)=>{
+    try {
+        notifySuccess("calling contract token...")
+        const rewardTokenInstance = await rewardTokenContract()
+        const transferAmount = ethers.utils.parseEther(amount)
+
+        const approveTx = await rewardTokenInstance.transfer(transferAddress,transferAmount)
+
+        const receipt = await approveTx.wait()
+        notifySuccess("Token transfered successfully")
+        return receipt
+    } catch (error) {
+        console.log(error);
+        const errorMsg = parseErrorMsg(error);
+        notifyError(errorMsg);
+    }
+}
+
+
