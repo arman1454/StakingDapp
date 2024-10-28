@@ -1,15 +1,32 @@
 //here we will write all the functions which will allow us to write the data in the smart contract
 import { BigNumber, ethers } from "ethers";
-import toast from "react-hot-toast";
-
-import { toEth, DepositTokenContract, rewardTokenContract ,stakingContract,ERC20Contract, TOKEN_ICO_CONTRACT } from "./constants";
-
+import { useToast } from "@/hooks/use-toast";
+import { toEth, depositTokenContract, rewardTokenContract ,stakingContract,ERC20Contract, TOKEN_ICO_CONTRACT } from "./constants";
+const { toast } = useToast()
 const STAKING_DAPP_ADDRESS = process.env.NEXT_PUBLIC_STAKING_DAPP;
 const DEPOSIT_TOKEN = process.env.NEXT_PUBLIC_DEPOSIT_TOKEN;
 const REWARD_TOKEN = process.env.NEXT_PUBLIC_REWARD_TOKEN;
 const TOKEN_LOGO = process.env.NEXT_PUBLIC_TOKEN_LOGO;
 
 //need toast here
+
+const notifySuccess = (msg)=>{
+    toast({
+        title: "Success",
+        description: msg,
+        variant: "success", // Use shadcn-ui's variants if available
+        duration: 2000,
+    });
+}
+
+const notifyError = (msg) => {
+    toast({
+        title: "Error",
+        description: msg,
+        variant: "error", // Use shadcn-ui's variants if available
+        duration: 2000,
+    });
+};
 
 function CONVERT_TIMESTAMP_TO_READABLE(timeStamp) {
     const date = new Date(timeStamp * 1000)
@@ -129,10 +146,32 @@ export async function STAKING_CONTRACT_DATA(address) {
 }
 
 
-export const deposit = (poolID,amount,address)=>{
+export const deposit = async (poolID,amount,address)=>{
     try {
-        
+        notifySuccess("Calling contract...");
+        const contractInstance = await stakingContract();
+        const dptContractInstance = await depositTokenContract()
+        const amountInWei = ethers.utils.parseUnits(amount.toString(), 18);
+        const currentAllowance = await dptContractInstance.allowance(address, contractInstance.address);
+
+        if(currentAllowance.lt(amountInWei)){
+            notifySuccess("Approving token....")
+            const approveTx = await dptContractInstance.approve(contractInstance.address,amountInWei)
+
+            await approveTx.wait()
+            console.log(`Approved ${amountInWei.toString()} tokens for staking`);
+        }
+
+        const gasEstimation = await contractInstance.estimateGas.deposit(Number(poolID),amountInWei)
+        notifySuccess("Staking token call....")
+        const stakeTx = await contractInstance.deposit(poolID,amountInWei,{gasLimit:gasEstimation})
+
+        const receipt = await stakeTx.wait()
+        notifySuccess("Token Staked Successfully...")
+        return receipt
     } catch (error) {
+        console.log(error);
+        const errorMsg = parseErrorMsg(error)
         
     }
 }

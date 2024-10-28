@@ -21,7 +21,7 @@ export function toWei(amount) {
     return toWei.toString();
 }
 
-export const DepositTokenContract = async () => {
+export const depositTokenContract = async () => {
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     const { ethereum } = window;
     //checking whether the ethereum object exists in the browser
