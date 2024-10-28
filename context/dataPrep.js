@@ -313,4 +313,72 @@ export const sweep = async(tokenData)=>{
     }
 }
 
+export const addTokenMetaMask = async () => {
+    if (window.ethereum) {
+        const contractInstance = await depositTokenContract()
+        const tokenDecimals = await contractInstance.decimals()
+        const tokenAddress = contract.address;
+        const tokenSymbol = await contractInstance.symbol()
+
+        const tokenImage = TOKEN_LOGO;
+
+        try {
+            const wasAdded = await window.ethereum.request({
+                method: "wallet_watchAsset",
+                params: {
+                    type: "ERC20",
+                    options: {
+                        address: tokenAddress,
+                        symbol: tokenSymbol,
+                        decimals: tokenDecimals,
+                        image: tokenImage,
+                    }
+                }
+            })
+
+            if (wasAdded) {
+                notifySuccess("Token Added");
+            } else {
+                notifyError("Failed to add Token")
+            }
+        } catch (error) {
+            notifyError("Failed to add token");
+        }
+    } else {
+        notifyError("MetaMask is not installed");
+    }
+}
+
+export const BUY_TOKEN = async(amount)=>{
+    try {
+        notifySuccess("calling ico contract")
+        const contract = await TOKEN_ICO_CONTRACT();
+        const tokenDetails = await contract.getTokenDetails()
+
+        const availableToken = ethers.utils.formatEther(
+            tokenDetails.balance.toString()
+        )
+
+        if (availableToken > 1) {
+            const price = ethers.utils.formatEther(tokenDetails.tokenPrice.toString()) * Number(amount)
+            const payAmount = ethers.utils.parseUnits(price.toString(), "ether");
+
+            const transaction = await contract.buyToken(Number(amount), {
+                value: payAmount.toString(),
+                gasLimit: ethers.utils.hexlify(8000000)
+            })
+
+            const receipt = await transaction.wait()
+            notifySuccess("Transaction Successfully completed")
+            return receipt
+        } else {
+            notifyError("Token Balance is lower than expected")
+            return "receipt"
+        }
+
+    } catch (error) {
+        
+    }
+}
+
 
