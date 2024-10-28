@@ -77,7 +77,7 @@ export const ERC20Contract = async (address, userAddress) => {
         const token = {
             name: await contractReader.name(),
             symbol: await contractReader.symbol(),
-            address: await contractReader.address,
+            address: contractReader.address,
             totalSupply: toEth(await contractReader.totalSupply()),
             balance: toEth(await contractReader.balanceOf(userAddress)),
             contractTokenBalance: toEth(await contractReader.balanceOf(STAKING_DAPP_ADDRESS))

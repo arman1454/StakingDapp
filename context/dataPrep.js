@@ -76,7 +76,7 @@ export async function STAKING_CONTRACT_DATA(address) {
                 const tokenPoolInfoA = await ERC20Contract(poolInfo.depositToken, address);
                 const tokenPoolInfoB = await ERC20Contract(poolInfo.rewardToken, address);
 
-                console.log(poolInfo);
+                // console.log(poolInfo);
 
                 const pool = {
                     depositTokenAddress: poolInfo.depositToken,
@@ -125,5 +125,14 @@ export async function STAKING_CONTRACT_DATA(address) {
         console.log(parseErrorMsg(error));
         return parseErrorMsg(error)
 
+    }
+}
+
+
+export const deposit = (poolID,amount,address)=>{
+    try {
+        
+    } catch (error) {
+        
     }
 }
