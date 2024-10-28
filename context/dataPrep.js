@@ -196,3 +196,50 @@ export const transferToken = async(amount,transferAddress)=>{
 }
 
 
+export const withDraw = async(poolID,amount)=>{
+    try {
+        notifySuccess("Calling Contract....")
+        const amountInWei = ethers.utils.parseUnits(amount.toString(), 18)
+        const contractInstance = await stakingContract();
+
+        const gasEstimation = await contractInstance.estimateGas.withDraw(
+            Number(poolID),amountInWei
+        )
+
+        const data = await contractInstance.withDraw(Number(poolID),amountInWei,{
+            gasLimit:gasEstimation
+        })
+
+        const receipt = await data.wait()
+        notifySuccess("transaction successfully completed")
+        return receipt;
+    } catch (error) {
+        console.log(error);
+        const errorMsg = parseErrorMsg(error);
+        notifyError(errorMsg);
+    }
+}
+
+export const claimReward = async(poolID)=>{
+    try {
+        notifySuccess("Calling contract...")
+        const contractInstance = await Contract();
+        const gasEstimation = await contractInstance.estimateGas.claimReward(
+            Number(poolID)
+        )
+
+        const data = await contractInstance.claimReward(Number(poolID), {
+            gasLimit: gasEstimation,
+        })
+
+        const receipt = await data.wait();
+        notifySuccess("Reward Claim successfully completed")
+        return receipt;
+    } catch (error) {
+        console.log(error);
+        const errorMsg = parseErrorMsg(error);
+        notifyError(errorMsg)
+    }
+}
+
+
