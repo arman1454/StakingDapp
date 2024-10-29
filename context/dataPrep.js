@@ -382,3 +382,82 @@ export const BUY_TOKEN = async(amount)=>{
 }
 
 
+export const TOKEN_WITHDRAW = async()=>{
+    try {
+        notifySuccess("Calling ico contract")
+        const contractInstance = await TOKEN_ICO_CONTRACT();
+        const tokenDetails = await contractInstance.getTokenDetails();
+        const availableToken = ethers.utils.formatEther(
+            tokenDetails.balance.toString()
+        )
+        if (availableToken > 1) {
+            const transaction = await contractInstance.withdrawAllTokens()
+
+            const receipt = await transaction.wait()
+            notifySuccess("Transaction Successfully completed")
+            return receipt
+        } else {
+            notifyError("Token Balance is lower than expected")
+            return "receipt"
+        }
+    } catch (error) {
+        console.log(error);
+        const errorMsg = parseErrorMsg(error)
+        notifyError(errorMsg);
+
+    }
+}
+
+
+export const UPDATE_TOKEN = async (_address) => {
+    try {
+        if (!_address) return notifyError("Data is missing");
+        notifySuccess("Calling Contract")
+        const contractIntance = await TOKEN_ICO_CONTRACT();
+        const gasEstimation = await contractIntance.estimateGas.updateToken(
+            _address
+        )
+        const transaction = await contractIntance.buyToken(Number(amount), {
+            _address,
+            gasLimit: gasEstimation
+        })
+
+        const receipt = await transaction.wait()
+        notifySuccess("Transaction Successfully completed")
+        return receipt
+
+    } catch (error) {
+        console.log(error);
+        const errorMsg = parseErrorMsg(error)
+        notifyError(errorMsg);
+
+    }
+}
+
+export const UPDATE_TOKEN_PRICE = async (prInstance) => {
+    try {
+        if (!price) return notifyError("Data is missing");
+        notifySuccess("Calling Contract")
+        const contractInstance = await TOKEN_ICO_CONTRACT();
+        const payAmount = ethers.utils.parseUnits(price.toString(), "ether");
+        const gasEstimation = await contractInstance.estimateGas.updateTokenSalePrice(
+            payAmount
+        )
+        const transaction = await contractInstance.updateTokenSalePrice(payAmount, {
+            gasLimit: gasEstimation
+        })
+
+        const receipt = await transaction.wait()
+        notifySuccess("Transaction Successfully completed")
+        return receipt
+
+
+    } catch (error) {
+        console.log(error);
+        const errorMsg = parseErrorMsg(error)
+        notifyError(errorMsg);
+
+    }
+}
+
+
